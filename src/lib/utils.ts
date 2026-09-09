@@ -16,7 +16,7 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
- * 產生不可竄改之防偽存證驗證碼（Verification Seal）
+ * 產生出勤驗證編號
  */
 export function generateVerificationCode(data: {
   userId: string;

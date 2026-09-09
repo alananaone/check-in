@@ -22,7 +22,6 @@ import {
   Database,
   Users,
   UserPlus,
-  Fingerprint,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -55,7 +54,6 @@ export default function AdminPage() {
   const [interns, setInterns] = useState<UserStats[]>([]);
   const [isLoadingInterns, setIsLoadingInterns] = useState(false);
   const [newInternName, setNewInternName] = useState("");
-  const [newInternEmail, setNewInternEmail] = useState("");
   const [isAddingIntern, setIsAddingIntern] = useState(false);
   const [internActionStatus, setInternActionStatus] = useState<{
     type: "success" | "error";
@@ -239,14 +237,12 @@ export default function AdminPage() {
         body: JSON.stringify({
           action: "create",
           name: newInternName.trim(),
-          email: newInternEmail.trim(),
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setInternActionStatus({ type: "success", message: data.message || "已成功新增實習生！" });
+        setInternActionStatus({ type: "success", message: data.message || "已新增實習生。" });
         setNewInternName("");
-        setNewInternEmail("");
         fetchInterns();
       } else {
         setInternActionStatus({ type: "error", message: data.error || "新增實習生失敗。" });
@@ -571,10 +567,10 @@ export default function AdminPage() {
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 max-w-lg">
+                  <div className="flex-1">
                     <label htmlFor="new-intern-name" className="block text-[11px] font-medium text-palette-muted uppercase mb-1">
-                      實習生姓名（必填）
+                      實習生姓名
                     </label>
                     <input
                       id="new-intern-name"
@@ -582,39 +578,23 @@ export default function AdminPage() {
                       required
                       value={newInternName}
                       onChange={(e) => setNewInternName(e.target.value)}
-                      placeholder="請輸入姓名，例如：陳新民"
+                      placeholder="請輸入姓名"
                       className="w-full px-3 py-2 bg-palette-base border border-palette-line-strong text-xs text-palette-ink focus:outline-none focus:border-palette-ink"
                     />
                   </div>
 
-                  <div className="sm:col-span-5">
-                    <label htmlFor="new-intern-email" className="block text-[11px] font-medium text-palette-muted uppercase mb-1">
-                      通知與副本信箱（選填）
-                    </label>
-                    <input
-                      id="new-intern-email"
-                      type="email"
-                      value={newInternEmail}
-                      onChange={(e) => setNewInternEmail(e.target.value)}
-                      placeholder="例如：intern@youthrights.org.tw"
-                      className="w-full px-3 py-2 bg-palette-base border border-palette-line-strong text-xs text-palette-ink focus:outline-none focus:border-palette-ink"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 flex items-end">
-                    <button
-                      type="submit"
-                      disabled={isAddingIntern}
-                      className="w-full py-2 px-3 bg-palette-ink text-palette-base text-xs font-medium tracking-wider uppercase hover:opacity-90 transition-opacity flex items-center justify-center space-x-1 disabled:opacity-50"
-                    >
-                      {isAddingIntern ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <UserPlus className="w-3.5 h-3.5" />
-                      )}
-                      <span>新增人員</span>
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={isAddingIntern}
+                    className="py-2 px-4 bg-palette-ink text-palette-base text-xs font-medium tracking-wider uppercase hover:opacity-90 transition-opacity flex items-center justify-center space-x-1 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {isAddingIntern ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <UserPlus className="w-3.5 h-3.5" />
+                    )}
+                    <span>新增人員</span>
+                  </button>
                 </div>
               </form>
 
@@ -624,8 +604,7 @@ export default function AdminPage() {
                   <thead>
                     <tr className="border-b border-palette-line-strong text-palette-muted font-medium uppercase text-[11px] tracking-wider">
                       <th scope="col" className="py-2.5 px-3">實習生姓名</th>
-                      <th scope="col" className="py-2.5 px-3">通知與存證信箱</th>
-                      <th scope="col" className="py-2.5 px-3">打卡密碼狀態</th>
+                      <th scope="col" className="py-2.5 px-3">密碼狀態</th>
                       <th scope="col" className="py-2.5 px-3">本週累計工時</th>
                       <th scope="col" className="py-2.5 px-3 text-right">名冊操作</th>
                     </tr>
@@ -633,13 +612,13 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-palette-line text-palette-ink">
                     {isLoadingInterns ? (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-xs text-palette-muted animate-pulse">
+                        <td colSpan={4} className="py-8 text-center text-xs text-palette-muted animate-pulse">
                           讀取實習生名冊中⋯⋯
                         </td>
                       </tr>
                     ) : interns.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-xs text-palette-muted">
+                        <td colSpan={4} className="py-8 text-center text-xs text-palette-muted">
                           目前名冊中無實習生人員。
                         </td>
                       </tr>
@@ -649,9 +628,6 @@ export default function AdminPage() {
                           <td className="py-2.5 px-3 font-medium whitespace-nowrap">
                             {intern.name}
                           </td>
-                          <td className="py-2.5 px-3 text-palette-muted whitespace-nowrap font-mono text-[11px]">
-                            {intern.email ? intern.email : "未設定通知信箱"}
-                          </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
                             <span
                               className={`inline-block text-[11px] px-2 py-0.5 border ${
@@ -660,7 +636,7 @@ export default function AdminPage() {
                                   : "bg-palette-ivory/50 border-palette-line text-palette-muted"
                               }`}
                             >
-                              {intern.hasPassword ? "已啟用個人密碼" : "免密碼模式"}
+                              {intern.hasPassword ? "已設定密碼" : "未設定密碼"}
                             </span>
                           </td>
                           <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap">
@@ -755,17 +731,14 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* 公正存證說明橫幅 */}
-              <div className="p-3.5 border border-palette-line bg-palette-surface/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center space-x-2">
-                  <Fingerprint className="w-4 h-4 text-palette-ink flex-shrink-0" aria-hidden="true" />
-                  <span className="font-semibold text-palette-ink">
-                    唯讀出勤流水帳協議生效中（不可修改／不可刪除）
-                  </span>
-                </div>
-                <div className="text-palette-muted text-[11px] leading-relaxed">
-                  系統全面拔除日誌刪改入口，每筆出勤記錄皆具備唯一防偽驗證碼，確保出勤事實具備最高公信力。
-                </div>
+              {/* 日誌說明直述 */}
+              <div className="p-3 border border-palette-line bg-palette-surface/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <span className="font-medium text-palette-ink">
+                  出勤紀錄不可修改或刪除
+                </span>
+                <span className="text-palette-muted text-[11px]">
+                  每筆打卡包含時間、地點與驗證編號，可匯出 CSV 檔案存檔。
+                </span>
               </div>
 
               {/* 日誌表格 */}
@@ -789,7 +762,7 @@ export default function AdminPage() {
                         <th scope="col" className="py-2.5 px-3">打卡地點</th>
                         <th scope="col" className="py-2.5 px-3">精確經緯度座標</th>
                         <th scope="col" className="py-2.5 px-3">來源網路位址</th>
-                        <th scope="col" className="py-2.5 px-3">防偽代碼</th>
+                        <th scope="col" className="py-2.5 px-3">驗證編號</th>
                         <th scope="col" className="py-2.5 px-3">備註</th>
                       </tr>
                     </thead>
@@ -826,10 +799,8 @@ export default function AdminPage() {
                             <td className="py-2.5 px-3 font-mono text-[11px] text-palette-muted whitespace-nowrap">
                               {log.ip}
                             </td>
-                            <td className="py-2.5 px-3 font-mono text-[11px] text-palette-ink whitespace-nowrap">
-                              <span className="bg-palette-surface border border-palette-line px-1.5 py-0.5 font-mono">
-                                {log.verificationCode || "—"}
-                              </span>
+                            <td className="py-2.5 px-3 font-mono text-[11px] text-palette-muted whitespace-nowrap">
+                              {log.verificationCode || "—"}
                             </td>
                             <td className="py-2.5 px-3 text-palette-muted max-w-xs truncate">
                               {log.note || "—"}

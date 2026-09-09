@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     if (format === "csv") {
       // 匯出包含 UTF-8 BOM 之 CSV 檔案，確保 Excel 開啟繁體中文不亂碼
-      const headers = ["紀錄編號", "防偽驗證碼", "實習生姓名", "打卡類型", "打卡時間", "打卡地點", "緯度", "經度", "來源網路位址", "出勤備註"];
+      const headers = ["紀錄編號", "驗證編號", "實習生姓名", "打卡類型", "打卡時間", "打卡地點", "緯度", "經度", "來源網路位址", "出勤備註"];
       const rows = logs.map((log) => [
         `"${log.id}"`,
         `"${log.verificationCode || ""}"`,
@@ -47,11 +47,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE() {
-  // 嚴格遵循「唯讀流水帳（Append-only Log）」原則，拔除日誌刪改功能
   return NextResponse.json(
     {
       success: false,
-      error: "系統已實施唯讀出勤流水帳公正協議（Append-only），出勤日誌嚴禁刪除或修改以保全存證效力。",
+      error: "出勤紀錄不可修改或刪除。",
     },
     { status: 405 }
   );

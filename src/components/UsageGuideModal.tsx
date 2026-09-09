@@ -113,7 +113,7 @@ export default function UsageGuideModal({ isOpen, onClose }: UsageGuideModalProp
             </div>
 
             <div className="p-3 bg-palette-surface/60 border border-palette-line text-xs text-palette-muted leading-relaxed">
-              提醒：可點選姓名旁的鎖頭自訂個人打卡密碼；所有出勤記錄皆具備防偽代碼且無法任意竄改，確保紀錄客觀公正。
+              提醒：可點選姓名旁的鎖頭自訂個人打卡密碼；出勤紀錄送出後不可修改或刪除。
             </div>
           </div>
         )}
@@ -136,8 +136,8 @@ export default function UsageGuideModal({ isOpen, onClose }: UsageGuideModalProp
                 2
               </span>
               <p>
-                <strong className="font-semibold">權限移交與保管：</strong>
-                建議主管設定一組專屬管理密碼並自行持有，實習生即無法任意變更後台配置。
+                <strong className="font-semibold">管理密碼：</strong>
+                建議主管在後台設定管理密碼，避免非管理人員更動系統設定。
               </p>
             </div>
 
@@ -146,8 +146,8 @@ export default function UsageGuideModal({ isOpen, onClose }: UsageGuideModalProp
                 3
               </span>
               <p>
-                <strong className="font-semibold">出勤規範與安全限制：</strong>
-                可設定每週目標時數，亦可開啟辦公室網路限制（填入機構網路位址，限現場簽到）。
+                <strong className="font-semibold">出勤規範與網路限制：</strong>
+                可設定每週目標時數，亦可開啟網路限制（填入辦公室網路位址，限現場打卡）。
               </p>
             </div>
 
@@ -156,13 +156,13 @@ export default function UsageGuideModal({ isOpen, onClose }: UsageGuideModalProp
                 4
               </span>
               <p>
-                <strong className="font-semibold">名冊維護與存證查核：</strong>
-                可隨時新增或移除實習生；系統全面啟用唯讀流水帳協議（無法刪改紀錄），並可隨時匯出包含防偽代碼之出勤報表。
+                <strong className="font-semibold">名冊維護與紀錄查核：</strong>
+                可新增或移除實習生名單；出勤紀錄不可修改或刪除，可隨時匯出 CSV 報表備查。
               </p>
             </div>
 
             <div className="p-3 bg-palette-surface/60 border border-palette-line text-xs text-palette-muted leading-relaxed">
-              備註：若需定期存證，建議主管每週至後台匯出 CSV 出勤報表存檔備查。
+              備註：建議主管定期至後台匯出出勤紀錄報表存檔。
             </div>
           </div>
         )}

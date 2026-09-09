@@ -449,12 +449,10 @@ export const db = {
   },
 
   async deleteLog(): Promise<boolean> {
-    // 遵循「唯讀流水帳（Append-only Log）」原則：系統不提供任何日誌刪除入口以保全存證效力
-    throw new Error("唯讀流水帳防竄改保護生效中，禁止刪除出勤日誌。");
+    throw new Error("出勤紀錄不可刪除。");
   },
 
   async clearAllLogs(): Promise<number> {
-    // 遵循「唯讀流水帳（Append-only Log）」原則：系統不提供任何日誌清空入口以保全存證效力
-    throw new Error("唯讀流水帳防竄改保護生效中，禁止清空出勤日誌。");
+    throw new Error("出勤紀錄不可清空。");
   },
 };

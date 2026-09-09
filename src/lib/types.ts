@@ -3,7 +3,7 @@ export type CheckInType = "CHECK_IN" | "CHECK_OUT";
 export interface User {
   id: string;
   name: string;
-  email?: string; // 通知或副本發送信箱
+  email?: string;
   passwordHash: string; // empty string means no password
   createdAt?: string;
   updatedAt?: string;
@@ -21,7 +21,7 @@ export interface CheckInLog {
   address: string;
   ip: string;
   note?: string;
-  verificationCode?: string; // 不可竄改防偽存證代碼
+  verificationCode?: string; // 驗證編號
   createdAt: string;
 }
 
