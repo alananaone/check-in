@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          address: cleanAddress || `經緯度座標: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+          address: cleanAddress || `座標：${latitude}，${longitude}`,
           raw: data,
         });
       }
@@ -60,16 +60,16 @@ export async function GET(req: NextRequest) {
       console.warn("Nominatim fetch failed, using fallback:", fetchErr);
     }
 
-    // Fallback: return coordinate label
+    // 備援方案：回傳最高精度座標
     return NextResponse.json({
       success: true,
-      address: `經緯度座標: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      address: `座標：${latitude}，${longitude}`,
     });
   } catch (error) {
     console.error("GET /api/reverse-geo error:", error);
     return NextResponse.json({
       success: true,
-      address: "位置解析異常，已以座標記錄",
+      address: "位置解析異常，已以座標記錄。",
     });
   }
 }

@@ -35,7 +35,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/users error:", error);
-    return NextResponse.json({ success: false, error: "無法取得實習生資訊" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "無法取得實習生資訊。" }, { status: 500 });
   }
 }
 
@@ -45,32 +45,32 @@ export async function POST(req: NextRequest) {
     const { userId, currentPassword, newPassword } = body;
 
     if (!userId) {
-      return NextResponse.json({ success: false, error: "缺少使用者識別碼" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "缺少使用者識別碼。" }, { status: 400 });
     }
 
     const user = await db.getUser(userId);
     if (!user) {
-      return NextResponse.json({ success: false, error: "找不到該實習生" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "找不到該實習生帳號。" }, { status: 404 });
     }
 
-    // Verify current password if user has one
+    // 驗證目前密碼
     if (user.passwordHash) {
       const isValid = verifyPassword(currentPassword || "", user.passwordHash);
       if (!isValid) {
-        return NextResponse.json({ success: false, error: "目前密碼不正確" }, { status: 401 });
+        return NextResponse.json({ success: false, error: "目前密碼不正確。" }, { status: 401 });
       }
     }
 
-    // Hash new password (or empty string if clearing password)
+    // 雜湊新密碼（若為空字串則清除密碼恢復免密碼模式）
     const newHash = newPassword ? hashPassword(newPassword) : "";
     await db.updateUserPassword(userId, newHash);
 
     return NextResponse.json({
       success: true,
-      message: newPassword ? "密碼已更新" : "已清除密碼（改為免密碼登入）",
+      message: newPassword ? "密碼已成功更新！" : "已清除密碼（改為免密碼模式）。",
     });
   } catch (error) {
     console.error("POST /api/users error:", error);
-    return NextResponse.json({ success: false, error: "更新密碼失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "更新密碼失敗。" }, { status: 500 });
   }
 }

@@ -25,9 +25,6 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
     status: "idle",
   });
 
-  const [customAddress, setCustomAddress] = useState("");
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-
   const fetchAddress = async (lat: number, lng: number): Promise<string> => {
     try {
       const res = await fetch(`/api/reverse-geo?lat=${lat}&lng=${lng}`);
@@ -36,9 +33,9 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
         return json.address;
       }
     } catch {
-      // ignore
+      // 忽略錯誤，回傳座標
     }
-    return `座標: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return `座標：${lat}，${lng}`;
   };
 
   const requestLocation = useCallback(() => {
@@ -49,7 +46,7 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
         accuracy: null,
         address: "瀏覽器不支援定位功能",
         status: "error",
-        errorMessage: "您的裝置或瀏覽器不支援 HTML5 定位",
+        errorMessage: "您的裝置或瀏覽器不支援定位功能",
       };
       setLocation(errLoc);
       onLocationChange(errLoc);
@@ -60,12 +57,13 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
       latitude: null,
       longitude: null,
       accuracy: null,
-      address: "正在偵測 GPS 地理位置...",
+      address: "正在偵測目前所在位置⋯⋯",
       status: "requesting",
     };
     setLocation(requestingLoc);
     onLocationChange(requestingLoc);
 
+    // 以最高精度請求地理位置（強制即時定位，不使用快取）
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
@@ -74,7 +72,7 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
         const successLoc: LocationData = {
           latitude,
           longitude,
-          accuracy: Math.round(accuracy),
+          accuracy: accuracy ? Math.round(accuracy) : null,
           address: resolvedAddress,
           status: "success",
         };
@@ -85,12 +83,12 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
         let msg = "無法取得位置資訊";
         let status: LocationData["status"] = "error";
         if (error.code === error.PERMISSION_DENIED) {
-          msg = "已拒絕位置授權，請開啟瀏覽器定位權限以記錄出勤地點";
+          msg = "已拒絕位置授權，請開啟瀏覽器定位權限以記錄出勤地點。";
           status = "denied";
         } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = "無法獲取定位信號，請至開闊處或檢查網路";
+          msg = "無法獲取定位訊號，請至開闊處或檢查網路。";
         } else if (error.code === error.TIMEOUT) {
-          msg = "定位請求逾時，請點擊右側按鈕重新整理";
+          msg = "定位請求逾時，請點擊右側按鈕重新整理。";
         }
 
         const failLoc: LocationData = {
@@ -106,34 +104,21 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
       },
       {
         enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 10000,
+        timeout: 20000,
+        maximumAge: 0,
       }
     );
   }, [onLocationChange]);
 
-  // Request location immediately upon component mount
+  // 元件載入時立即主動請求最高精度定位
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
 
-  const handleManualAddressSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customAddress.trim()) return;
-
-    const updatedLoc: LocationData = {
-      ...location,
-      address: customAddress.trim(),
-    };
-    setLocation(updatedLoc);
-    onLocationChange(updatedLoc);
-    setIsEditingAddress(false);
-  };
-
   return (
     <div className="w-full py-4 border-b border-palette-line bg-palette-surface/50 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Location indicator and info */}
+        {/* 左側：定位狀態與地址資訊 */}
         <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
           <div className="mt-0.5 sm:mt-0 flex-shrink-0 w-7 h-7 border border-palette-line flex items-center justify-center bg-palette-base text-palette-ink">
             {location.status === "requesting" && (
@@ -153,16 +138,16 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-semibold tracking-wider text-palette-muted uppercase">
-                打卡地理位置
+                目前所在位置
               </span>
               {location.status === "success" && (
                 <span className="text-[11px] px-1.5 py-0.5 bg-palette-sage/20 text-palette-ink border border-palette-sage/40 font-mono">
-                  GPS 已鎖定 (±{location.accuracy}m)
+                  已取得精確定位（誤差範圍：±{location.accuracy}公尺）
                 </span>
               )}
               {location.status === "requesting" && (
                 <span className="text-[11px] px-1.5 py-0.5 bg-palette-ivory text-palette-muted border border-palette-line">
-                  定位中
+                  定位中⋯⋯
                 </span>
               )}
               {(location.status === "denied" || location.status === "error") && (
@@ -172,49 +157,13 @@ export default function LocationDetector({ onLocationChange }: LocationDetectorP
               )}
             </div>
 
-            {isEditingAddress ? (
-              <form onSubmit={handleManualAddressSubmit} className="mt-1 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={customAddress}
-                  onChange={(e) => setCustomAddress(e.target.value)}
-                  placeholder="請手動輸入打卡地點（例如：台少盟辦公室）"
-                  className="text-xs sm:text-sm px-2 py-1 border border-palette-line-strong bg-palette-base text-palette-ink w-full max-w-md focus:outline-none focus:border-palette-ink"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  className="px-2.5 py-1 text-xs bg-palette-ink text-palette-base border border-palette-ink hover:opacity-90 transition-opacity whitespace-nowrap"
-                >
-                  確認
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingAddress(false)}
-                  className="px-2 py-1 text-xs border border-palette-line bg-palette-base text-palette-muted hover:text-palette-ink whitespace-nowrap"
-                >
-                  取消
-                </button>
-              </form>
-            ) : (
-              <div className="mt-0.5 text-xs sm:text-sm text-palette-ink font-medium truncate flex items-center gap-2">
-                <span className="truncate">{location.address || "尚未取得位置"}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomAddress(location.address);
-                    setIsEditingAddress(true);
-                  }}
-                  className="text-[11px] text-palette-muted hover:text-palette-ink underline whitespace-nowrap"
-                >
-                  手動修正
-                </button>
-              </div>
-            )}
+            <div className="mt-0.5 text-xs sm:text-sm text-palette-ink font-medium truncate">
+              {location.address || "尚未取得位置資訊"}
+            </div>
           </div>
         </div>
 
-        {/* Right: Refresh button */}
+        {/* 右側：重新定位按鈕 */}
         <div className="flex items-center space-x-2 flex-shrink-0 self-end sm:self-center">
           <button
             type="button"

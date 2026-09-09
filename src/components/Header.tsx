@@ -25,7 +25,7 @@ export default function Header({ currentPath = "/" }: HeaderProps) {
                 rel="noopener noreferrer"
                 className="text-palette-faint hover:text-palette-ink transition-colors"
                 title="前往台少盟官網"
-                aria-label="台少盟官網 (另開新視窗)"
+                aria-label="台少盟官網（另開新視窗）"
               >
                 <ExternalLink className="w-3 h-3" />
               </a>

@@ -11,39 +11,35 @@ import PersonalLogsTable from "@/components/PersonalLogsTable";
 import PasswordModal from "@/components/PasswordModal";
 import Footer from "@/components/Footer";
 import { CheckInLog } from "@/lib/types";
-import { Database } from "lucide-react";
-import Link from "next/link";
 
 export default function CheckInPage() {
   const [users, setUsers] = useState<UserStats[]>([]);
-  const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>("wang-rui-hong");
   const [currentLocation, setCurrentLocation] = useState<LocationData>({
     latitude: null,
     longitude: null,
     accuracy: null,
-    address: "偵測中...",
+    address: "偵測中⋯⋯",
     status: "idle",
   });
   const [userLogs, setUserLogs] = useState<CheckInLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [passwordModalUser, setPasswordModalUser] = useState<UserStats | null>(null);
 
-  // Fetch users list and stats
+  // 取得實習生清單與累積時數
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/users");
       const data = await res.json();
       if (data.success && data.users) {
         setUsers(data.users);
-        setIsDbConnected(Boolean(data.dbConnected));
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
   }, []);
 
-  // Fetch logs for current selected user
+  // 取得指定實習生的出勤紀錄
   const fetchLogs = useCallback(async (userId: string) => {
     setIsLoadingLogs(true);
     try {
@@ -89,28 +85,8 @@ export default function CheckInPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-palette-base text-palette-ink">
-      {/* 1. Header with branding & navigation */}
+      {/* 頂部導航與機構資訊 */}
       <Header currentPath="/" />
-
-      {isDbConnected === false && (
-        <aside
-          aria-label="資料庫狀態提示"
-          className="w-full border-b border-palette-line bg-palette-nude/30 px-4 sm:px-6 py-2 text-xs text-palette-ink flex flex-col sm:flex-row sm:items-center justify-between gap-1"
-        >
-          <div className="flex items-center space-x-2">
-            <Database className="w-3.5 h-3.5 text-palette-muted flex-shrink-0" aria-hidden="true" />
-            <span>
-              資料庫連線提示：目前尚未綁定 Vercel Postgres / Neon 雲端資料庫（處於無狀態模式），打卡紀錄在冷啟動後可能無法持久。
-            </span>
-          </div>
-          <Link
-            href="/admini"
-            className="underline font-medium text-palette-ink hover:opacity-80 whitespace-nowrap self-start sm:self-auto"
-          >
-            前往後台查看設定教學
-          </Link>
-        </aside>
-      )}
 
       <main className="flex-1 w-full pb-16">
         {/* 2. Real-time Digital Clock */}

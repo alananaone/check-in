@@ -35,7 +35,7 @@ export default function WeeklyHoursProgress({ user }: WeeklyHoursProgressProps) 
             <span className="text-2xl sm:text-3xl font-light text-palette-ink">
               {user.totalHours.toFixed(1)}
             </span>
-            <span className="text-xs text-palette-muted">/ 目標 {user.targetHours} 小時</span>
+            <span className="text-xs text-palette-muted">／ 目標：{user.targetHours} 小時</span>
             <span className="text-xs px-2 py-0.5 bg-palette-ivory border border-palette-line text-palette-ink font-sans">
               {percentage}% 達成
             </span>

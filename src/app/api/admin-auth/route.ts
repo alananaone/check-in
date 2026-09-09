@@ -13,7 +13,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/admin-auth error:", error);
-    return NextResponse.json({ success: false, error: "驗證狀態查詢失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "驗證狀態查詢失敗。" }, { status: 500 });
   }
 }
 
@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
     const settings = await db.getSettings();
 
     if (!settings.adminPasswordHash) {
-      // No password set, directly authenticated
+      // 尚未設定密碼，直接允許授權
       return NextResponse.json({ success: true, authorized: true });
     }
 
     const isValid = verifyPassword(password || "", settings.adminPasswordHash);
     if (!isValid) {
       return NextResponse.json(
-        { success: false, authorized: false, error: "管理員密碼錯誤" },
+        { success: false, authorized: false, error: "管理員密碼錯誤。" },
         { status: 401 }
       );
     }
@@ -39,6 +39,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, authorized: true });
   } catch (error) {
     console.error("POST /api/admin-auth error:", error);
-    return NextResponse.json({ success: false, error: "身分驗證失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "身分驗證失敗。" }, { status: 500 });
   }
 }

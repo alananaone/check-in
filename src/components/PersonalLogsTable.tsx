@@ -35,14 +35,14 @@ export default function PersonalLogsTable({
 
         {isLoading ? (
           <div className="py-12 text-center text-xs text-palette-muted animate-pulse">
-            載入打卡紀錄中...
+            載入打卡紀錄中⋯⋯
           </div>
         ) : logs.length === 0 ? (
           <div className="py-12 text-center border border-palette-line bg-palette-surface/30">
             <Inbox className="w-8 h-8 text-palette-faint mx-auto mb-2" aria-hidden="true" />
             <div className="text-sm font-medium text-palette-ink">尚無打卡紀錄</div>
             <p className="text-xs text-palette-muted mt-1">
-              請點擊上方「上班簽到」以建立第一筆實習出勤紀錄
+              請點擊上方「上班簽到」以建立第一筆實習出勤紀錄。
             </p>
           </div>
         ) : (
@@ -54,16 +54,16 @@ export default function PersonalLogsTable({
                     打卡時間
                   </th>
                   <th scope="col" className="py-2.5 px-3">
-                    類型
+                    出勤類型
                   </th>
                   <th scope="col" className="py-2.5 px-3">
-                    打卡地點
+                    打卡地點與精確座標
                   </th>
                   <th scope="col" className="py-2.5 px-3 hidden md:table-cell">
-                    來源 IP
+                    來源網路位址
                   </th>
                   <th scope="col" className="py-2.5 px-3">
-                    備註
+                    出勤備註
                   </th>
                 </tr>
               </thead>
@@ -75,12 +75,12 @@ export default function PersonalLogsTable({
                       key={log.id}
                       className="hover:bg-palette-surface/60 transition-colors"
                     >
-                      {/* Timestamp */}
+                      {/* 打卡時間 */}
                       <td className="py-3 px-3 font-mono text-xs whitespace-nowrap">
                         {formatTaiwanDateTime(log.timestamp)}
                       </td>
 
-                      {/* Type Badge */}
+                      {/* 類型標籤 */}
                       <td className="py-3 px-3 whitespace-nowrap">
                         <span
                           className={`inline-block text-xs px-2 py-0.5 font-medium border ${
@@ -93,20 +93,27 @@ export default function PersonalLogsTable({
                         </span>
                       </td>
 
-                      {/* Location */}
+                      {/* 地點與最高精度 GPS 座標 */}
                       <td className="py-3 px-3">
-                        <div className="flex items-start space-x-1.5 max-w-xs sm:max-w-md">
-                          <MapPin
-                            className="w-3.5 h-3.5 text-palette-faint flex-shrink-0 mt-0.5"
-                            aria-hidden="true"
-                          />
-                          <span className="truncate text-xs" title={log.address}>
-                            {log.address || "未記錄地點"}
-                          </span>
+                        <div className="flex flex-col max-w-xs sm:max-w-md">
+                          <div className="flex items-start space-x-1.5">
+                            <MapPin
+                              className="w-3.5 h-3.5 text-palette-faint flex-shrink-0 mt-0.5"
+                              aria-hidden="true"
+                            />
+                            <span className="truncate text-xs font-medium" title={log.address}>
+                              {log.address || "未記錄地點"}
+                            </span>
+                          </div>
+                          {log.latitude && log.longitude && (
+                            <span className="text-[10px] font-mono text-palette-faint pl-5">
+                              座標：{log.latitude}，{log.longitude}
+                            </span>
+                          )}
                         </div>
                       </td>
 
-                      {/* IP */}
+                      {/* 來源 IP */}
                       <td className="py-3 px-3 font-mono text-xs text-palette-muted hidden md:table-cell whitespace-nowrap">
                         <div className="flex items-center space-x-1">
                           <Network className="w-3 h-3 text-palette-faint" aria-hidden="true" />
@@ -114,9 +121,9 @@ export default function PersonalLogsTable({
                         </div>
                       </td>
 
-                      {/* Note */}
+                      {/* 備註 */}
                       <td className="py-3 px-3 text-xs text-palette-muted max-w-xs truncate">
-                        {log.note || "-"}
+                        {log.note || "—"}
                       </td>
                     </tr>
                   );

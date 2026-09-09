@@ -406,4 +406,22 @@ export const db = {
     }
     return false;
   },
+
+  async clearAllLogs(): Promise<number> {
+    if (pgPool) {
+      try {
+        await initPostgresTables(pgPool);
+        const res = await pgPool.query(`DELETE FROM check_in_logs;`);
+        return res.rowCount ?? 0;
+      } catch (err) {
+        console.error("Postgres error clearAllLogs, falling back to file:", err);
+      }
+    }
+
+    const store = ensureFileStorage();
+    const count = store.logs.length;
+    store.logs = [];
+    saveFileStorage(store);
+    return count;
+  },
 };

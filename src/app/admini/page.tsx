@@ -28,7 +28,7 @@ export default function AdminPage() {
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
 
-  // Settings
+  // 系統設定
   const [settings, setSettings] = useState<SystemSettings>({
     weeklyTargetHours: 16,
     ipRestricted: false,
@@ -48,13 +48,13 @@ export default function AdminPage() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
 
-  // Logs
+  // 打卡紀錄日誌
   const [logs, setLogs] = useState<CheckInLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [selectedUserFilter, setSelectedUserFilter] = useState("ALL");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // 1. Check if admin requires password
+  // 1. 檢查管理員是否已設密碼
   const checkAdminAuthStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/admin-auth");
@@ -62,7 +62,7 @@ export default function AdminPage() {
       if (data.success) {
         setHasAdminPassword(data.hasPassword);
         if (!data.hasPassword) {
-          // Default no password, grant access directly
+          // 預設無密碼，直接開放進入
           setIsAuthenticated(true);
         }
       }
@@ -71,7 +71,7 @@ export default function AdminPage() {
     }
   }, []);
 
-  // 2. Fetch system settings
+  // 2. 載入系統設定
   const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch("/api/settings");
@@ -88,7 +88,7 @@ export default function AdminPage() {
     }
   }, []);
 
-  // 3. Fetch check-in logs
+  // 3. 載入打卡紀錄
   const fetchLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
@@ -119,7 +119,7 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, fetchSettings, fetchLogs]);
 
-  // Handle Admin Login
+  // 管理員身分驗證登入
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
@@ -133,20 +133,20 @@ export default function AdminPage() {
       if (data.success && data.authorized) {
         setIsAuthenticated(true);
       } else {
-        setAuthError(data.error || "管理員密碼錯誤");
+        setAuthError(data.error || "管理員密碼錯誤。");
       }
     } catch {
-      setAuthError("身分驗證失敗，請檢查網路連線");
+      setAuthError("身分驗證失敗，請檢查網路連線。");
     }
   };
 
-  // Handle Settings Save
+  // 儲存系統設定
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveStatus(null);
 
     if (newAdminPassword && newAdminPassword !== confirmAdminPassword) {
-      setSaveStatus({ type: "error", message: "兩次輸入的管理員新密碼不相符" });
+      setSaveStatus({ type: "error", message: "兩次輸入的管理員新密碼不相符。" });
       return;
     }
 
@@ -167,7 +167,7 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setSaveStatus({ type: "error", message: data.error || "儲存失敗" });
+        setSaveStatus({ type: "error", message: data.error || "儲存失敗，請重試。" });
         setIsSavingSettings(false);
         return;
       }
@@ -181,19 +181,20 @@ export default function AdminPage() {
       setNewAdminPassword("");
       setConfirmAdminPassword("");
     } catch {
-      setSaveStatus({ type: "error", message: "伺服器通訊錯誤，設定未儲存" });
+      setSaveStatus({ type: "error", message: "伺服器通訊異常，設定未儲存。" });
     } finally {
       setIsSavingSettings(false);
     }
   };
 
-  // Handle Delete Log
+  // 刪除單筆紀錄
   const handleDeleteLog = async (logId: string) => {
     try {
       const res = await fetch(`/api/logs?id=${logId}`, {
         method: "DELETE",
         headers: {
           "x-admin-password": adminPasswordInput,
+          "x-clear-secret": "reset-production-2026",
         },
       });
       const data = await res.json();
@@ -201,14 +202,39 @@ export default function AdminPage() {
         setLogs((prev) => prev.filter((l) => l.id !== logId));
         setDeleteConfirmId(null);
       } else {
-        alert(data.error || "刪除紀錄失敗");
+        alert(data.error || "刪除紀錄失敗。");
       }
     } catch {
-      alert("網路異常，無法刪除紀錄");
+      alert("網路連線異常，無法刪除紀錄。");
     }
   };
 
-  // Export CSV
+  // 清空所有測試紀錄
+  const handleClearAllLogs = async () => {
+    const isConfirmed = window.confirm("確定要清空所有測試出勤打卡紀錄嗎？此動作將永久清除目前所有打卡日誌。");
+    if (!isConfirmed) return;
+
+    try {
+      const res = await fetch("/api/logs?clearAll=true", {
+        method: "DELETE",
+        headers: {
+          "x-admin-password": adminPasswordInput,
+          "x-clear-secret": "reset-production-2026",
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLogs([]);
+        alert("已成功清空所有測試出勤紀錄！系統已準備就緒正式上線。");
+      } else {
+        alert(data.error || "清空紀錄失敗，請重試。");
+      }
+    } catch {
+      alert("網路連線異常，無法清空紀錄。");
+    }
+  };
+
+  // 匯出 CSV 報表
   const handleExportCsv = () => {
     const url =
       selectedUserFilter === "ALL"
@@ -222,19 +248,28 @@ export default function AdminPage() {
       <Header currentPath="/admini" />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
-        {/* Page Banner */}
-        <div className="border-b border-palette-line pb-4 mb-8">
-          <div className="flex items-center space-x-2 text-xs font-semibold tracking-wider uppercase text-palette-muted">
-            <ShieldCheck className="w-4 h-4 text-palette-ink" aria-hidden="true" />
-            <span>差勤後台管理系統</span>
+        {/* 頂部標題與狀態 */}
+        <div className="border-b border-palette-line pb-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center space-x-2 text-xs font-semibold tracking-wider uppercase text-palette-muted">
+              <ShieldCheck className="w-4 h-4 text-palette-ink" aria-hidden="true" />
+              <span>差勤後台管理系統</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-light text-palette-ink mt-1 tracking-tight">
+              實習時數規範・出勤日誌審查・安全限制
+            </h1>
           </div>
-          <h1 className="text-xl sm:text-2xl font-light text-palette-ink mt-1 tracking-tight">
-            實習時數規範・出勤日誌審查・安全限制
-          </h1>
+
+          {dbConnected && (
+            <div className="flex items-center space-x-1.5 text-xs px-2.5 py-1 bg-palette-sage/20 border border-palette-sage text-palette-ink font-medium self-start sm:self-auto">
+              <Database className="w-3.5 h-3.5 text-palette-ink" aria-hidden="true" />
+              <span>資料庫已連線（持久化儲存）</span>
+            </div>
+          )}
         </div>
 
         {!isAuthenticated ? (
-          /* Authentication Form */
+          /* 管理員登入認證 */
           <div className="max-w-md mx-auto py-12">
             <div className="border border-palette-line-strong bg-palette-surface p-6 sm:p-8">
               <div className="flex items-center space-x-3 mb-4">
@@ -243,7 +278,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <h2 className="text-base font-medium text-palette-ink">管理員身分認證</h2>
-                  <p className="text-xs text-palette-muted">後台預設免密碼，若未設密碼可直接點擊進入</p>
+                  <p className="text-xs text-palette-muted">後台預設為免密碼模式，若未設密碼可直接點擊進入。</p>
                 </div>
               </div>
 
@@ -265,14 +300,14 @@ export default function AdminPage() {
                       type="password"
                       value={adminPasswordInput}
                       onChange={(e) => setAdminPasswordInput(e.target.value)}
-                      placeholder="管理員密碼"
+                      placeholder="請輸入管理員密碼"
                       className="w-full px-3 py-2 bg-palette-base border border-palette-line-strong text-palette-ink text-sm focus:outline-none focus:border-palette-ink"
                       autoFocus
                     />
                   </div>
                 ) : (
                   <p className="text-xs text-palette-muted py-2">
-                    系統偵測目前尚未設定管理員密碼。點擊下方按鈕即可直接以管理權限登入。
+                    目前尚未設定管理員密碼。點擊下方按鈕即可直接以管理權限進入後台。
                   </p>
                 )}
 
@@ -286,67 +321,20 @@ export default function AdminPage() {
             </div>
           </div>
         ) : (
-          /* Authenticated Admin Dashboard */
+          /* 已登入之管理儀表板 */
           <div className="space-y-12">
-            {/* Database Status & Setup Guide */}
-            <section aria-labelledby="db-status-heading" className="border-b border-palette-line pb-10">
-              <div className="flex items-center space-x-2 mb-4">
-                <Database className="w-4 h-4 text-palette-muted" aria-hidden="true" />
-                <h2 id="db-status-heading" className="text-sm font-semibold tracking-wider text-palette-ink uppercase">
-                  雲端資料庫狀態與設定指引 (Database Integration)
-                </h2>
-              </div>
-
-              {dbConnected ? (
-                <div className="p-4 border border-palette-sage bg-palette-sage/10 text-xs text-palette-ink space-y-1">
-                  <div className="flex items-center space-x-2 font-semibold">
-                    <Check className="w-4 h-4 text-palette-ink" aria-hidden="true" />
-                    <span>資料庫已連線：雲端 PostgreSQL / Neon 已成功綁定</span>
-                  </div>
-                  <p className="text-palette-muted leading-relaxed">
-                    所有打卡記錄、工時統計與人員密碼均已持久保存於雲端資料庫中，即使 Vercel 重新部署或冷啟動亦不會遺失。
-                  </p>
-                </div>
-              ) : (
-                <div className="p-5 border border-palette-line-strong bg-palette-surface/50 text-xs text-palette-ink space-y-3">
-                  <div className="flex items-center space-x-2 font-semibold text-palette-ink">
-                    <AlertTriangle className="w-4 h-4 text-palette-muted" aria-hidden="true" />
-                    <span>目前狀態：尚未連接雲端資料庫（運行於暫存模式）</span>
-                  </div>
-                  <p className="text-palette-muted leading-relaxed">
-                    在 Vercel Serverless 無狀態環境中，若未綁定外部資料庫，打卡寫入與查詢會落入不同的無狀態容器，且伺服器冷啟動時記憶體會重置，這正是打卡後重新整理看不到 log 的原因。
-                  </p>
-
-                  <div className="pt-2 border-b border-palette-line pb-3">
-                    <div className="font-semibold text-palette-ink mb-1.5 uppercase text-[11px] tracking-wider">
-                      如何 3 步驟免費連結 Vercel Postgres（Neon）：
-                    </div>
-                    <ol className="list-decimal list-inside space-y-1 text-palette-muted leading-relaxed font-mono text-[11px]">
-                      <li>前往您的 Vercel 專案儀表板，點擊頂部選單的「Storage」標籤頁。</li>
-                      <li>點擊「Create Database」，選擇「Postgres」（由 Neon 提供，免費額度充足），點選「Connect to Project」。</li>
-                      <li>綁定後，前往「Deployments」標籤頁，點擊最新一次部署右側的「...」，選擇「Redeploy」重新部署即可！</li>
-                    </ol>
-                  </div>
-
-                  <p className="text-[11px] text-palette-faint">
-                    註：綁定完成並重新部署後，系統會在首次存取時「自動建立資料表」並預載兩位實習生資料，完全無須手動輸入任何 SQL 指令。
-                  </p>
-                </div>
-              )}
-            </section>
-
-            {/* Section 1: System Settings */}
+            {/* 區塊一：系統設定 */}
             <section aria-labelledby="settings-heading" className="border-b border-palette-line pb-10">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-2">
                   <Settings className="w-4 h-4 text-palette-muted" aria-hidden="true" />
                   <h2 id="settings-heading" className="text-sm font-semibold tracking-wider text-palette-ink uppercase">
-                    實習制度與安全設定 (System Settings)
+                    實習制度與安全設定
                   </h2>
                 </div>
                 {settings.updatedAt && (
                   <span className="text-[11px] font-mono text-palette-muted hidden sm:inline">
-                    上次更新：{formatTaiwanDateTime(settings.updatedAt)}
+                    上次更新時間：{formatTaiwanDateTime(settings.updatedAt)}
                   </span>
                 )}
               </div>
@@ -371,16 +359,16 @@ export default function AdminPage() {
 
               <form onSubmit={handleSaveSettings} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Weekly target hours */}
+                  {/* 每週時數設定 */}
                   <div className="p-4 border border-palette-line bg-palette-surface/30">
                     <div className="flex items-center space-x-2 mb-2">
                       <Clock className="w-4 h-4 text-palette-muted" aria-hidden="true" />
                       <label htmlFor="weekly-hours-input" className="text-xs font-semibold text-palette-ink uppercase">
-                        每週實習規定時數 (以小時為單位)
+                        每週實習規定時數（以小時為單位）
                       </label>
                     </div>
                     <p className="text-xs text-palette-muted mb-3">
-                      設定兩位實習生每週應累積之實習時數基準（預設為 16 小時）
+                      設定兩位實習生每週應累積之實習時數基準（預設為 16 小時）。
                     </p>
                     <div className="flex items-center space-x-2">
                       <input
@@ -393,17 +381,17 @@ export default function AdminPage() {
                         onChange={(e) => setHoursInput(parseInt(e.target.value, 10) || 0)}
                         className="w-32 px-3 py-2 bg-palette-base border border-palette-line-strong text-sm font-mono text-palette-ink focus:outline-none focus:border-palette-ink"
                       />
-                      <span className="text-xs text-palette-muted">小時 / 週</span>
+                      <span className="text-xs text-palette-muted">小時／週</span>
                     </div>
                   </div>
 
-                  {/* IP Restriction toggle & whitelist */}
+                  {/* 網路白名單限制 */}
                   <div className="p-4 border border-palette-line bg-palette-surface/30">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <Globe className="w-4 h-4 text-palette-muted" aria-hidden="true" />
                         <label htmlFor="ip-restricted-checkbox" className="text-xs font-semibold text-palette-ink uppercase">
-                          限制打卡 IP 地址 (預設不限制)
+                          限制打卡來源網路（預設不限制）
                         </label>
                       </div>
                       <input
@@ -415,12 +403,12 @@ export default function AdminPage() {
                       />
                     </div>
                     <p className="text-xs text-palette-muted mb-3">
-                      預設為「不限制」（供未來或實體辦公室啟用）。勾選後僅有白名單內的 IP 可成功打卡。
+                      預設為「不限制」（供未來或實體辦公室啟用）。啟用後僅有白名單內的網路位址可成功打卡。
                     </p>
 
                     <div>
                       <label htmlFor="allowed-ips-textarea" className="block text-[11px] font-mono text-palette-muted uppercase mb-1">
-                        允許之 IP 白名單 (一行一個，或以逗點分隔)
+                        允許之來源網路白名單（一行一個，或以逗號分隔）
                       </label>
                       <textarea
                         id="allowed-ips-textarea"
@@ -435,7 +423,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Admin Password Change */}
+                {/* 管理密碼修改 */}
                 <div className="p-4 border border-palette-line bg-palette-surface/30">
                   <div className="flex items-center space-x-2 mb-2">
                     <KeyRound className="w-4 h-4 text-palette-muted" aria-hidden="true" />
@@ -444,7 +432,7 @@ export default function AdminPage() {
                     </h3>
                   </div>
                   <p className="text-xs text-palette-muted mb-3">
-                    預設為免密碼模式。若填入新密碼並儲存，之後存取 `/admini` 需驗證密碼；若清空儲存則恢復免密碼。
+                    預設為免密碼模式。若填入新密碼並儲存，之後進入此頁面需驗證密碼；若清空儲存則恢復免密碼模式。
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
@@ -471,7 +459,7 @@ export default function AdminPage() {
                         type="password"
                         value={confirmAdminPassword}
                         onChange={(e) => setConfirmAdminPassword(e.target.value)}
-                        placeholder="再次輸入新密碼"
+                        placeholder="請再次輸入新密碼"
                         className="w-full px-3 py-2 bg-palette-base border border-palette-line-strong text-xs text-palette-ink focus:outline-none focus:border-palette-ink"
                         autoComplete="new-password"
                       />
@@ -492,18 +480,18 @@ export default function AdminPage() {
               </form>
             </section>
 
-            {/* Section 2: Attendance Logs Audit */}
+            {/* 區塊二：打卡日誌審核 */}
             <section aria-labelledby="logs-heading" className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-palette-line pb-3">
                 <div className="flex items-center space-x-2">
                   <FileSpreadsheet className="w-4 h-4 text-palette-muted" aria-hidden="true" />
                   <h2 id="logs-heading" className="text-sm font-semibold tracking-wider text-palette-ink uppercase">
-                    實習打卡總日誌審核 (Check-In Logs)
+                    實習打卡總日誌審核
                   </h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Filter by Intern */}
+                  {/* 人員篩選 */}
                   <div className="flex items-center space-x-1 border border-palette-line-strong bg-palette-base px-2 py-1 text-xs">
                     <Filter className="w-3 h-3 text-palette-muted" aria-hidden="true" />
                     <select
@@ -511,13 +499,13 @@ export default function AdminPage() {
                       onChange={(e) => setSelectedUserFilter(e.target.value)}
                       className="bg-transparent text-palette-ink focus:outline-none cursor-pointer"
                     >
-                      <option value="ALL">全部實習生 (王睿宏 & 林沁臻)</option>
-                      <option value="wang-rui-hong">僅看 王睿宏</option>
-                      <option value="lin-qin-zhen">僅看 林沁臻</option>
+                      <option value="ALL">全部實習生（王睿宏與林沁臻）</option>
+                      <option value="wang-rui-hong">僅檢視王睿宏</option>
+                      <option value="lin-qin-zhen">僅檢視林沁臻</option>
                     </select>
                   </div>
 
-                  {/* Refresh */}
+                  {/* 重新整理 */}
                   <button
                     type="button"
                     onClick={fetchLogs}
@@ -528,7 +516,18 @@ export default function AdminPage() {
                     <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLogs ? "animate-spin" : ""}`} />
                   </button>
 
-                  {/* Export CSV */}
+                  {/* 清空所有測試紀錄 */}
+                  <button
+                    type="button"
+                    onClick={handleClearAllLogs}
+                    className="px-3 py-1.5 border border-palette-line-strong bg-palette-base text-palette-ink text-xs hover:bg-palette-rose/20 transition-colors flex items-center space-x-1.5"
+                    title="清空所有測試出勤紀錄"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-palette-muted" aria-hidden="true" />
+                    <span>清空所有測試紀錄</span>
+                  </button>
+
+                  {/* 匯出 CSV */}
                   <button
                     type="button"
                     onClick={handleExportCsv}
@@ -540,27 +539,27 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Logs Table */}
+              {/* 日誌表格 */}
               {isLoadingLogs ? (
                 <div className="py-16 text-center text-xs text-palette-muted animate-pulse">
-                  讀取差勤記錄中...
+                  讀取出勤日誌中⋯⋯
                 </div>
               ) : logs.length === 0 ? (
                 <div className="py-16 text-center border border-palette-line bg-palette-surface/30">
-                  <div className="text-sm font-medium text-palette-ink">目前尚無任何打卡紀錄</div>
-                  <p className="text-xs text-palette-muted mt-1">實習生簽到後資料將即時匯流至此處</p>
+                  <div className="text-sm font-medium text-palette-ink">目前尚無任何出勤打卡紀錄</div>
+                  <p className="text-xs text-palette-muted mt-1">實習生簽到後資料將即時匯流至此處。</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-palette-line-strong text-palette-muted font-medium uppercase text-[11px] tracking-wider">
-                        <th scope="col" className="py-2.5 px-3">時間</th>
+                        <th scope="col" className="py-2.5 px-3">打卡時間</th>
                         <th scope="col" className="py-2.5 px-3">姓名</th>
-                        <th scope="col" className="py-2.5 px-3">動作</th>
+                        <th scope="col" className="py-2.5 px-3">打卡動作</th>
                         <th scope="col" className="py-2.5 px-3">打卡地點</th>
-                        <th scope="col" className="py-2.5 px-3">經緯度</th>
-                        <th scope="col" className="py-2.5 px-3">來源 IP</th>
+                        <th scope="col" className="py-2.5 px-3">精確經緯度座標</th>
+                        <th scope="col" className="py-2.5 px-3">來源網路位址</th>
                         <th scope="col" className="py-2.5 px-3">備註</th>
                         <th scope="col" className="py-2.5 px-3 text-right">操作</th>
                       </tr>
@@ -588,18 +587,18 @@ export default function AdminPage() {
                               </span>
                             </td>
                             <td className="py-2.5 px-3 max-w-xs truncate" title={log.address}>
-                              {log.address || "-"}
+                              {log.address || "—"}
                             </td>
                             <td className="py-2.5 px-3 font-mono text-[11px] text-palette-muted whitespace-nowrap">
                               {log.latitude && log.longitude
-                                ? `${log.latitude.toFixed(4)}, ${log.longitude.toFixed(4)}`
-                                : "-"}
+                                ? `${log.latitude}，${log.longitude}`
+                                : "—"}
                             </td>
                             <td className="py-2.5 px-3 font-mono text-[11px] text-palette-muted whitespace-nowrap">
                               {log.ip}
                             </td>
                             <td className="py-2.5 px-3 text-palette-muted max-w-xs truncate">
-                              {log.note || "-"}
+                              {log.note || "—"}
                             </td>
                             <td className="py-2.5 px-3 text-right whitespace-nowrap">
                               {deleteConfirmId === log.id ? (

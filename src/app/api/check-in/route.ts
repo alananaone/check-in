@@ -11,35 +11,35 @@ export async function POST(req: NextRequest) {
 
     if (!userId || !type) {
       return NextResponse.json(
-        { success: false, error: "缺少必要打卡參數 (userId 或 type)" },
+        { success: false, error: "缺少必要打卡參數（未提供實習生身分或打卡類型）。" },
         { status: 400 }
       );
     }
 
     if (type !== "CHECK_IN" && type !== "CHECK_OUT") {
       return NextResponse.json(
-        { success: false, error: "打卡類型不正確 (必須為 CHECK_IN 或 CHECK_OUT)" },
+        { success: false, error: "打卡類型不正確（必須為上班簽到或下班簽退）。" },
         { status: 400 }
       );
     }
 
-    // 1. Check user existence and password
+    // 1. 驗證實習生帳號與密碼
     const user = await db.getUser(userId);
     if (!user) {
-      return NextResponse.json({ success: false, error: "找不到該實習生帳號" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "找不到該實習生帳號。" }, { status: 404 });
     }
 
     if (user.passwordHash) {
       const isPwdValid = verifyPassword(password || "", user.passwordHash);
       if (!isPwdValid) {
         return NextResponse.json(
-          { success: false, error: "身分密碼驗證失敗，請輸入正確密碼" },
+          { success: false, error: "身分密碼驗證失敗，請輸入正確密碼。" },
           { status: 401 }
         );
       }
     }
 
-    // 2. Check IP restriction
+    // 2. 檢驗 IP 安全限制
     const settings = await db.getSettings();
     const clientIp = getClientIp(req.headers);
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: `IP 限制啟用中：目前網路來源 (${clientIp}) 不在允許的打卡白名單內，無法打卡。請連線至指定網路。`,
+            error: `IP 限制啟用中：目前來源網路（${clientIp}）不在允許之白名單內，無法打卡。請連線至指定網路。`,
             clientIp,
           },
           { status: 403 }
@@ -57,14 +57,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Prepare location text
+    // 3. 整理地點文字與最高精度座標
     const cleanAddress = (address && typeof address === "string" && address.trim())
       ? address.trim()
-      : (latitude && longitude)
-      ? `經緯度座標: ${Number(latitude).toFixed(5)}, ${Number(longitude).toFixed(5)}`
+      : (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null)
+      ? `座標：${latitude}，${longitude}`
       : "位置資訊未提供或獲取失敗";
 
-    // 4. Save log
+    // 4. 寫入打卡日誌（經緯度保持浮點最高精度）
     const newLog = await db.addLog({
       userId: user.id,
       userName: user.name,
@@ -80,11 +80,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: type === "CHECK_IN" ? "上班簽到成功" : "下班簽退成功",
+      message: type === "CHECK_IN" ? "上班簽到成功！" : "下班簽退成功！",
       log: newLog,
     });
   } catch (error) {
     console.error("POST /api/check-in error:", error);
-    return NextResponse.json({ success: false, error: "系統錯誤，打卡記錄失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "系統錯誤，打卡記錄失敗。" }, { status: 500 });
   }
 }

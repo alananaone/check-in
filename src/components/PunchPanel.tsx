@@ -26,11 +26,11 @@ export default function PunchPanel({
   } | null>(null);
 
   const handlePunch = async (type: CheckInType) => {
-    // Basic verification
+    // 基礎身分驗證
     if (currentUser.hasPassword && !password.trim()) {
       setAlert({
         type: "error",
-        message: `請先輸入 ${currentUser.name} 的個人密碼以完成身分驗證`,
+        message: `請先輸入「${currentUser.name}」的個人密碼，以完成身分驗證。`,
       });
       return;
     }
@@ -59,7 +59,7 @@ export default function PunchPanel({
       if (!res.ok || !data.success) {
         setAlert({
           type: "error",
-          message: data.error || "打卡失敗，請稍後再試",
+          message: data.error || "打卡失敗，請稍後再試。",
         });
         setIsSubmitting(false);
         return;
@@ -67,7 +67,7 @@ export default function PunchPanel({
 
       setAlert({
         type: "success",
-        message: `${data.message}！打卡時間已成功寫入系統紀錄。`,
+        message: `${data.message}打卡時間已成功寫入系統紀錄。`,
       });
       setPassword("");
       setNote("");
@@ -76,7 +76,7 @@ export default function PunchPanel({
       console.error("Punch error:", err);
       setAlert({
         type: "error",
-        message: "連線異常，無法送出打卡請求，請檢查網路連線",
+        message: "連線異常，無法送出打卡請求，請檢查網路連線。",
       });
     } finally {
       setIsSubmitting(false);
@@ -86,7 +86,7 @@ export default function PunchPanel({
   return (
     <section aria-label="打卡操作區域" className="w-full border-b border-palette-line py-8 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
-        {/* Status notification banner */}
+        {/* 狀態提示橫幅 */}
         {alert && (
           <div
             role="alert"
@@ -106,7 +106,7 @@ export default function PunchPanel({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-          {/* Left inputs: password if required, and note */}
+          {/* 左側：密碼（若有設定）與備註 */}
           <div className="md:col-span-6 space-y-4">
             {currentUser.hasPassword ? (
               <div>
@@ -114,7 +114,7 @@ export default function PunchPanel({
                   htmlFor="user-password-input"
                   className="block text-xs font-semibold text-palette-muted tracking-wider uppercase mb-1.5"
                 >
-                  輸入打卡密碼 ({currentUser.name})
+                  輸入打卡密碼（{currentUser.name}）
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-palette-faint">
@@ -133,7 +133,7 @@ export default function PunchPanel({
               </div>
             ) : (
               <div className="p-3 bg-palette-surface/60 border border-palette-line text-xs text-palette-muted flex items-center justify-between">
-                <span>目前帳號預設為免密碼模式</span>
+                <span>目前帳號為免密碼模式</span>
                 <span className="text-[11px] text-palette-faint font-mono">
                   可隨時透過姓名旁鎖頭設定密碼
                 </span>
@@ -145,7 +145,7 @@ export default function PunchPanel({
                 htmlFor="punch-note-input"
                 className="block text-xs font-semibold text-palette-muted tracking-wider uppercase mb-1.5"
               >
-                出勤工作備註 (選填)
+                出勤工作備註（選填）
               </label>
               <input
                 id="punch-note-input"
@@ -158,9 +158,9 @@ export default function PunchPanel({
             </div>
           </div>
 
-          {/* Right: Big punch action buttons */}
+          {/* 右側：上班與下班打卡按鈕 */}
           <div className="md:col-span-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
-            {/* Check In Button */}
+            {/* 上班打卡按鈕 */}
             <button
               type="button"
               disabled={isSubmitting}
@@ -177,11 +177,11 @@ export default function PunchPanel({
                 <LogIn className="w-4 h-4" aria-hidden="true" />
               )}
               <span className="text-sm sm:text-base">
-                {currentUser.isClockedIn ? "再次簽到 (上班)" : "上班簽到"}
+                {currentUser.isClockedIn ? "再次簽到（上班）" : "上班簽到"}
               </span>
             </button>
 
-            {/* Check Out Button */}
+            {/* 下班打卡按鈕 */}
             <button
               type="button"
               disabled={isSubmitting}

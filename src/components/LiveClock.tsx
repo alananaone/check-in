@@ -59,7 +59,7 @@ export default function LiveClock() {
       </div>
 
       <div className="mt-2 text-xs text-palette-faint tracking-wider">
-        標準台北時間 (UTC+8)
+        標準台北時間
       </div>
     </section>
   );

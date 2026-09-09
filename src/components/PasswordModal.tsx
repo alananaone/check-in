@@ -32,7 +32,7 @@ export default function PasswordModal({
     setSuccessMsg("");
 
     if (newPassword && newPassword !== confirmPassword) {
-      setErrorMsg("兩次輸入的新密碼不相符");
+      setErrorMsg("兩次輸入的新密碼不相符。");
       return;
     }
 
@@ -51,12 +51,12 @@ export default function PasswordModal({
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setErrorMsg(data.error || "密碼修改失敗");
+        setErrorMsg(data.error || "密碼修改失敗。");
         setIsSubmitting(false);
         return;
       }
 
-      setSuccessMsg(data.message || "密碼已更新");
+      setSuccessMsg(data.message || "密碼已更新！");
       setTimeout(() => {
         onSuccess();
         onClose();
@@ -66,7 +66,7 @@ export default function PasswordModal({
         setSuccessMsg("");
       }, 1200);
     } catch {
-      setErrorMsg("網路連線失敗，請重試");
+      setErrorMsg("網路連線失敗，請稍後重試。");
     } finally {
       setIsSubmitting(false);
     }

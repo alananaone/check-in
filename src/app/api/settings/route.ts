@@ -20,7 +20,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/settings error:", error);
-    return NextResponse.json({ success: false, error: "無法取得系統設定" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "無法取得系統設定。" }, { status: 500 });
   }
 }
 
@@ -37,12 +37,12 @@ export async function POST(req: NextRequest) {
 
     const currentSettings = await db.getSettings();
 
-    // Verify admin password if one exists
+    // 驗證管理員密碼
     if (currentSettings.adminPasswordHash) {
       const isValid = verifyPassword(adminPassword || "", currentSettings.adminPasswordHash);
       if (!isValid) {
         return NextResponse.json(
-          { success: false, error: "管理員密碼驗證失敗，無法修改設定" },
+          { success: false, error: "管理員密碼驗證失敗，無法修改設定。" },
           { status: 401 }
         );
       }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       const hours = parseInt(weeklyTargetHours, 10);
       if (isNaN(hours) || hours <= 0 || hours > 168) {
         return NextResponse.json(
-          { success: false, error: "每週實習時數必須為 1 至 168 之間的正整數" },
+          { success: false, error: "每週實習時數必須為 1 至 168 之間的正整數。" },
           { status: 400 }
         );
       }
@@ -84,17 +84,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "系統設定更新成功",
+      message: "系統設定已成功更新！",
       settings: {
         weeklyTargetHours: updated.weeklyTargetHours,
         ipRestricted: updated.ipRestricted,
         allowedIps: updated.allowedIps,
         hasAdminPassword: !!updated.adminPasswordHash,
         updatedAt: updated.updatedAt,
+        dbConnected: db.isPostgresConnected(),
       },
     });
   } catch (error) {
     console.error("POST /api/settings error:", error);
-    return NextResponse.json({ success: false, error: "更新系統設定失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "更新系統設定失敗。" }, { status: 500 });
   }
 }

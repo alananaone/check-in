@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-palette-muted">
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
           <span className="font-semibold text-palette-ink">
-            台灣少年權益與福利促進聯盟 (台少盟)
+            台灣少年權益與福利促進聯盟（台少盟）
           </span>
           <span className="hidden sm:inline text-palette-line-strong">|</span>
           <a

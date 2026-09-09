@@ -31,10 +31,10 @@ export default function UserSelector({
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="text-xs font-semibold tracking-wider text-palette-muted uppercase">
-            選擇打卡人員 (Interns)
+            選擇打卡人員
           </div>
           <p className="text-xs text-palette-faint mt-0.5">
-            請點選您的姓名以執行簽到、簽退或查閱工時明細
+            請點選您的姓名以執行簽到、簽退或查閱出勤紀錄
           </p>
         </div>
 
