@@ -9,6 +9,7 @@ import PunchPanel from "@/components/PunchPanel";
 import WeeklyHoursProgress from "@/components/WeeklyHoursProgress";
 import PersonalLogsTable from "@/components/PersonalLogsTable";
 import PasswordModal from "@/components/PasswordModal";
+import UsageGuideModal from "@/components/UsageGuideModal";
 import Footer from "@/components/Footer";
 import { CheckInLog } from "@/lib/types";
 
@@ -25,6 +26,7 @@ export default function CheckInPage() {
   const [userLogs, setUserLogs] = useState<CheckInLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [passwordModalUser, setPasswordModalUser] = useState<UserStats | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // 取得實習生清單與累積時數
   const fetchUsers = useCallback(async () => {
@@ -58,6 +60,18 @@ export default function CheckInPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // 初次造訪時檢查是否需要跳出使用說明彈窗
+  useEffect(() => {
+    try {
+      const hideGuide = localStorage.getItem("hide_intern_guide");
+      if (!hideGuide) {
+        setIsGuideOpen(true);
+      }
+    } catch {
+      // 忽略 localStorage 存取異常
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedUserId) {
@@ -132,8 +146,14 @@ export default function CheckInPage() {
         }}
       />
 
+      {/* Usage Guide Modal */}
+      <UsageGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
+
       {/* Footer */}
-      <Footer />
+      <Footer onOpenGuide={() => setIsGuideOpen(true)} />
     </div>
   );
 }

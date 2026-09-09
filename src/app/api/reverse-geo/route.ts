@@ -38,13 +38,19 @@ export async function GET(req: NextRequest) {
         // Assemble clean Taiwanese address format
         const city = addr.city || addr.county || addr.town || addr.municipality || "";
         const district = addr.suburb || addr.city_district || addr.district || addr.town || "";
-        const road = addr.road || addr.street || addr.neighbourhood || addr.pedestrian || "";
-        const houseNumber = addr.house_number ? `${addr.house_number}號` : "";
+        const road = addr.road || addr.street || "";
+        let houseNumber = (addr.house_number || "").trim();
+        if (houseNumber && !houseNumber.endsWith("號")) {
+          houseNumber = `${houseNumber}號`;
+        }
         const building = addr.building || addr.amenity || "";
 
         let cleanAddress = [city, district, road, houseNumber, building]
           .filter(Boolean)
           .join("");
+
+        // 去除可能重複出現的「號」字（如 60號號 修正為 60號）
+        cleanAddress = cleanAddress.replace(/號+/g, "號");
 
         if (!cleanAddress && data.display_name) {
           cleanAddress = data.display_name;

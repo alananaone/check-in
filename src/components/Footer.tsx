@@ -1,6 +1,10 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, HelpCircle } from "lucide-react";
 
-export default function Footer() {
+interface FooterProps {
+  onOpenGuide?: () => void;
+}
+
+export default function Footer({ onOpenGuide }: FooterProps) {
   return (
     <footer className="w-full border-b border-palette-line py-8 px-4 sm:px-6 bg-palette-surface/40 mt-auto">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-palette-muted">
@@ -20,8 +24,22 @@ export default function Footer() {
           </a>
         </div>
 
-        <div className="text-palette-faint font-mono text-[11px] text-center sm:text-right">
-          實習生差勤管理系統・標準台北時間紀錄
+        <div className="flex items-center space-x-4">
+          {onOpenGuide && (
+            <button
+              type="button"
+              onClick={onOpenGuide}
+              className="text-palette-ink hover:text-palette-muted transition-colors flex items-center space-x-1 border border-palette-line-strong px-2 py-1 bg-palette-base"
+              title="查看系統使用指引"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-palette-muted" aria-hidden="true" />
+              <span>使用指引</span>
+            </button>
+          )}
+
+          <div className="text-palette-faint font-mono text-[11px] text-center sm:text-right">
+            實習生差勤管理系統・標準台北時間紀錄
+          </div>
         </div>
       </div>
     </footer>

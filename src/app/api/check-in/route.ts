@@ -57,9 +57,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. 整理地點文字與最高精度座標
+    // 3. 整理地點文字與最高精度座標（過濾重複之「號」字）
     const cleanAddress = (address && typeof address === "string" && address.trim())
-      ? address.trim()
+      ? address.trim().replace(/號+/g, "號")
       : (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null)
       ? `座標：${latitude}，${longitude}`
       : "位置資訊未提供或獲取失敗";
