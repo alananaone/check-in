@@ -28,7 +28,11 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ success: true, users: result });
+    return NextResponse.json({
+      success: true,
+      users: result,
+      dbConnected: db.isPostgresConnected(),
+    });
   } catch (error) {
     console.error("GET /api/users error:", error);
     return NextResponse.json({ success: false, error: "無法取得實習生資訊" }, { status: 500 });

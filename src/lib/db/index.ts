@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Pool } from "pg";
+import { Pool } from "@neondatabase/serverless";
 import { CheckInLog, SystemSettings, User } from "../types";
 
 const DEFAULT_USERS: User[] = [
@@ -31,7 +31,6 @@ if (postgresUrl) {
   try {
     pgPool = new Pool({
       connectionString: postgresUrl,
-      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
     });
   } catch (err) {
     console.error("Failed to initialize PostgreSQL pool:", err);
@@ -170,6 +169,10 @@ async function initPostgresTables(pool: Pool) {
 
 // Unified Database API
 export const db = {
+  isPostgresConnected(): boolean {
+    return Boolean(pgPool && postgresUrl);
+  },
+
   async getUsers(): Promise<User[]> {
     if (pgPool) {
       try {

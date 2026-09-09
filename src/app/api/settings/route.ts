@@ -15,6 +15,7 @@ export async function GET() {
         allowedIps: settings.allowedIps,
         hasAdminPassword: !!settings.adminPasswordHash,
         updatedAt: settings.updatedAt,
+        dbConnected: db.isPostgresConnected(),
       },
     });
   } catch (error) {

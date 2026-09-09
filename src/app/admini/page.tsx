@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Check,
   Loader2,
+  Database,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -45,6 +46,7 @@ export default function AdminPage() {
     message: string;
   } | null>(null);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
 
   // Logs
   const [logs, setLogs] = useState<CheckInLog[]>([]);
@@ -76,6 +78,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success && data.settings) {
         setSettings(data.settings);
+        setDbConnected(Boolean(data.settings.dbConnected));
         setHoursInput(data.settings.weeklyTargetHours);
         setIpRestrictedInput(data.settings.ipRestricted);
         setAllowedIpsInput(data.settings.allowedIps.join("\n"));
@@ -285,6 +288,53 @@ export default function AdminPage() {
         ) : (
           /* Authenticated Admin Dashboard */
           <div className="space-y-12">
+            {/* Database Status & Setup Guide */}
+            <section aria-labelledby="db-status-heading" className="border-b border-palette-line pb-10">
+              <div className="flex items-center space-x-2 mb-4">
+                <Database className="w-4 h-4 text-palette-muted" aria-hidden="true" />
+                <h2 id="db-status-heading" className="text-sm font-semibold tracking-wider text-palette-ink uppercase">
+                  雲端資料庫狀態與設定指引 (Database Integration)
+                </h2>
+              </div>
+
+              {dbConnected ? (
+                <div className="p-4 border border-palette-sage bg-palette-sage/10 text-xs text-palette-ink space-y-1">
+                  <div className="flex items-center space-x-2 font-semibold">
+                    <Check className="w-4 h-4 text-palette-ink" aria-hidden="true" />
+                    <span>資料庫已連線：雲端 PostgreSQL / Neon 已成功綁定</span>
+                  </div>
+                  <p className="text-palette-muted leading-relaxed">
+                    所有打卡記錄、工時統計與人員密碼均已持久保存於雲端資料庫中，即使 Vercel 重新部署或冷啟動亦不會遺失。
+                  </p>
+                </div>
+              ) : (
+                <div className="p-5 border border-palette-line-strong bg-palette-surface/50 text-xs text-palette-ink space-y-3">
+                  <div className="flex items-center space-x-2 font-semibold text-palette-ink">
+                    <AlertTriangle className="w-4 h-4 text-palette-muted" aria-hidden="true" />
+                    <span>目前狀態：尚未連接雲端資料庫（運行於暫存模式）</span>
+                  </div>
+                  <p className="text-palette-muted leading-relaxed">
+                    在 Vercel Serverless 無狀態環境中，若未綁定外部資料庫，打卡寫入與查詢會落入不同的無狀態容器，且伺服器冷啟動時記憶體會重置，這正是打卡後重新整理看不到 log 的原因。
+                  </p>
+
+                  <div className="pt-2 border-b border-palette-line pb-3">
+                    <div className="font-semibold text-palette-ink mb-1.5 uppercase text-[11px] tracking-wider">
+                      如何 3 步驟免費連結 Vercel Postgres（Neon）：
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-palette-muted leading-relaxed font-mono text-[11px]">
+                      <li>前往您的 Vercel 專案儀表板，點擊頂部選單的「Storage」標籤頁。</li>
+                      <li>點擊「Create Database」，選擇「Postgres」（由 Neon 提供，免費額度充足），點選「Connect to Project」。</li>
+                      <li>綁定後，前往「Deployments」標籤頁，點擊最新一次部署右側的「...」，選擇「Redeploy」重新部署即可！</li>
+                    </ol>
+                  </div>
+
+                  <p className="text-[11px] text-palette-faint">
+                    註：綁定完成並重新部署後，系統會在首次存取時「自動建立資料表」並預載兩位實習生資料，完全無須手動輸入任何 SQL 指令。
+                  </p>
+                </div>
+              )}
+            </section>
+
             {/* Section 1: System Settings */}
             <section aria-labelledby="settings-heading" className="border-b border-palette-line pb-10">
               <div className="flex items-center justify-between mb-6">
