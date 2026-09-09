@@ -22,8 +22,22 @@ interface DbSchema {
   settings: SystemSettings;
 }
 
+function resolvePostgresUrl(): string | undefined {
+  if (process.env.POSTGRES_URL) return process.env.POSTGRES_URL;
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.POSTGRES_PRISMA_URL) return process.env.POSTGRES_PRISMA_URL;
+
+  // Auto-detect any environment variable that contains a postgresql connection string
+  for (const [, val] of Object.entries(process.env)) {
+    if (val && typeof val === "string" && (val.startsWith("postgres://") || val.startsWith("postgresql://"))) {
+      return val;
+    }
+  }
+  return undefined;
+}
+
 // PostgreSQL connection pool (if available)
-const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const postgresUrl = resolvePostgresUrl();
 let pgPool: Pool | null = null;
 let isPgInitialized = false;
 
