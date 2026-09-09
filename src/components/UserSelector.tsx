@@ -5,12 +5,14 @@ import { UserCheck, Lock, Unlock } from "lucide-react";
 export interface UserStats {
   id: string;
   name: string;
+  email?: string;
   hasPassword: boolean;
   isClockedIn: boolean;
   completedHours: number;
   activeSessionHours: number;
   totalHours: number;
   targetHours: number;
+  createdAt?: string;
 }
 
 interface UserSelectorProps {

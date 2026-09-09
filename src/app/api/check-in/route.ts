@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getClientIp, isIpAllowed, verifyPassword } from "@/lib/utils";
+import { getClientIp, isIpAllowed, verifyPassword, generateVerificationCode } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -64,18 +64,30 @@ export async function POST(req: NextRequest) {
       ? `座標：${latitude}，${longitude}`
       : "位置資訊未提供或獲取失敗";
 
-    // 4. 寫入打卡日誌（經緯度保持浮點最高精度）
+    // 4. 產生不可竄改之防偽存證驗證碼
+    const timestamp = new Date().toISOString();
+    const verificationCode = generateVerificationCode({
+      userId: user.id,
+      type,
+      timestamp,
+      ip: clientIp,
+      latitude: latitude !== undefined && latitude !== null ? Number(latitude) : null,
+      longitude: longitude !== undefined && longitude !== null ? Number(longitude) : null,
+    });
+
+    // 5. 寫入打卡日誌（經緯度保持浮點最高精度）
     const newLog = await db.addLog({
       userId: user.id,
       userName: user.name,
       type,
-      timestamp: new Date().toISOString(),
+      timestamp,
       latitude: latitude !== undefined && latitude !== null ? Number(latitude) : null,
       longitude: longitude !== undefined && longitude !== null ? Number(longitude) : null,
       accuracy: accuracy !== undefined && accuracy !== null ? Number(accuracy) : null,
       address: cleanAddress,
       ip: clientIp,
       note: (note && typeof note === "string") ? note.trim() : "",
+      verificationCode,
     });
 
     return NextResponse.json({

@@ -118,9 +118,12 @@ async function initPostgresTables(pool: Pool) {
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(64) PRIMARY KEY,
         name VARCHAR(128) NOT NULL,
+        email VARCHAR(255) DEFAULT '',
         password_hash TEXT NOT NULL DEFAULT '',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';
 
       CREATE TABLE IF NOT EXISTS check_in_logs (
         id VARCHAR(64) PRIMARY KEY,
@@ -134,8 +137,11 @@ async function initPostgresTables(pool: Pool) {
         address TEXT NOT NULL,
         ip VARCHAR(128) NOT NULL,
         note TEXT,
+        verification_code VARCHAR(64) DEFAULT '',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      ALTER TABLE check_in_logs ADD COLUMN IF NOT EXISTS verification_code VARCHAR(64) DEFAULT '';
 
       CREATE TABLE IF NOT EXISTS system_settings (
         id INT PRIMARY KEY DEFAULT 1,
@@ -191,7 +197,7 @@ export const db = {
     if (pgPool) {
       try {
         await initPostgresTables(pgPool);
-        const res = await pgPool.query(`SELECT id, name, password_hash as "passwordHash" FROM users ORDER BY id;`);
+        const res = await pgPool.query(`SELECT id, name, email, password_hash as "passwordHash", created_at as "createdAt" FROM users ORDER BY created_at ASC, id ASC;`);
         return res.rows;
       } catch (err) {
         console.error("Postgres error getUsers, falling back to file:", err);
@@ -204,6 +210,59 @@ export const db = {
   async getUser(id: string): Promise<User | null> {
     const users = await this.getUsers();
     return users.find((u) => u.id === id) || null;
+  },
+
+  async addUser(name: string, email: string = ""): Promise<User> {
+    const cleanName = name.trim();
+    const id = `intern_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const createdAt = new Date().toISOString();
+    const newUser: User = {
+      id,
+      name: cleanName,
+      email: email.trim(),
+      passwordHash: "",
+      createdAt,
+    };
+
+    if (pgPool) {
+      try {
+        await initPostgresTables(pgPool);
+        await pgPool.query(
+          `INSERT INTO users (id, name, email, password_hash, created_at)
+           VALUES ($1, $2, $3, $4, $5);`,
+          [newUser.id, newUser.name, newUser.email, newUser.passwordHash, newUser.createdAt]
+        );
+        return newUser;
+      } catch (err) {
+        console.error("Postgres error addUser, falling back to file:", err);
+      }
+    }
+
+    const store = ensureFileStorage();
+    store.users.push(newUser);
+    saveFileStorage(store);
+    return newUser;
+  },
+
+  async deleteUser(id: string): Promise<boolean> {
+    if (pgPool) {
+      try {
+        await initPostgresTables(pgPool);
+        const res = await pgPool.query(`DELETE FROM users WHERE id = $1;`, [id]);
+        return (res.rowCount ?? 0) > 0;
+      } catch (err) {
+        console.error("Postgres error deleteUser, falling back to file:", err);
+      }
+    }
+
+    const store = ensureFileStorage();
+    const initialLen = store.users.length;
+    store.users = store.users.filter((u) => u.id !== id);
+    if (store.users.length !== initialLen) {
+      saveFileStorage(store);
+      return true;
+    }
+    return false;
   },
 
   async updateUserPassword(id: string, passwordHash: string): Promise<boolean> {
@@ -303,6 +362,7 @@ export const db = {
         let query = `
           SELECT id, user_id as "userId", user_name as "userName", type,
                  timestamp, latitude, longitude, accuracy, address, ip, note,
+                 verification_code as "verificationCode",
                  created_at as "createdAt"
           FROM check_in_logs
         `;
@@ -325,6 +385,7 @@ export const db = {
           latitude: r.latitude !== null ? Number(r.latitude) : null,
           longitude: r.longitude !== null ? Number(r.longitude) : null,
           accuracy: r.accuracy !== null ? Number(r.accuracy) : null,
+          verificationCode: r.verificationCode || "",
         }));
       } catch (err) {
         console.error("Postgres error getLogs, falling back to file:", err);
@@ -357,8 +418,8 @@ export const db = {
       try {
         await initPostgresTables(pgPool);
         await pgPool.query(
-          `INSERT INTO check_in_logs (id, user_id, user_name, type, timestamp, latitude, longitude, accuracy, address, ip, note, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);`,
+          `INSERT INTO check_in_logs (id, user_id, user_name, type, timestamp, latitude, longitude, accuracy, address, ip, note, verification_code, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
           [
             newLog.id,
             newLog.userId,
@@ -371,6 +432,7 @@ export const db = {
             newLog.address,
             newLog.ip,
             newLog.note || "",
+            newLog.verificationCode || "",
             newLog.createdAt,
           ]
         );
@@ -386,42 +448,13 @@ export const db = {
     return newLog;
   },
 
-  async deleteLog(id: string): Promise<boolean> {
-    if (pgPool) {
-      try {
-        await initPostgresTables(pgPool);
-        const res = await pgPool.query(`DELETE FROM check_in_logs WHERE id = $1;`, [id]);
-        return (res.rowCount ?? 0) > 0;
-      } catch (err) {
-        console.error("Postgres error deleteLog, falling back to file:", err);
-      }
-    }
-
-    const store = ensureFileStorage();
-    const initialLen = store.logs.length;
-    store.logs = store.logs.filter((l) => l.id !== id);
-    if (store.logs.length !== initialLen) {
-      saveFileStorage(store);
-      return true;
-    }
-    return false;
+  async deleteLog(): Promise<boolean> {
+    // 遵循「唯讀流水帳（Append-only Log）」原則：系統不提供任何日誌刪除入口以保全存證效力
+    throw new Error("唯讀流水帳防竄改保護生效中，禁止刪除出勤日誌。");
   },
 
   async clearAllLogs(): Promise<number> {
-    if (pgPool) {
-      try {
-        await initPostgresTables(pgPool);
-        const res = await pgPool.query(`DELETE FROM check_in_logs;`);
-        return res.rowCount ?? 0;
-      } catch (err) {
-        console.error("Postgres error clearAllLogs, falling back to file:", err);
-      }
-    }
-
-    const store = ensureFileStorage();
-    const count = store.logs.length;
-    store.logs = [];
-    saveFileStorage(store);
-    return count;
+    // 遵循「唯讀流水帳（Append-only Log）」原則：系統不提供任何日誌清空入口以保全存證效力
+    throw new Error("唯讀流水帳防竄改保護生效中，禁止清空出勤日誌。");
   },
 };

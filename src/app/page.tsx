@@ -35,6 +35,12 @@ export default function CheckInPage() {
       const data = await res.json();
       if (data.success && data.users) {
         setUsers(data.users);
+        if (data.users.length > 0) {
+          setSelectedUserId((prev) => {
+            const exists = data.users.some((u: UserStats) => u.id === prev);
+            return exists ? prev : data.users[0].id;
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);

@@ -16,6 +16,22 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
+ * 產生不可竄改之防偽存證驗證碼（Verification Seal）
+ */
+export function generateVerificationCode(data: {
+  userId: string;
+  type: string;
+  timestamp: string;
+  ip: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}): string {
+  const payload = `${data.userId}#${data.type}#${data.timestamp}#${data.ip}#${data.latitude ?? ""}#${data.longitude ?? ""}`;
+  const hash = crypto.createHash("sha256").update(payload).digest("hex").toUpperCase();
+  return `TK-${hash.substring(0, 8)}`;
+}
+
+/**
  * Extract client IP from Next.js request headers
  */
 export function getClientIp(headers: Headers): string {
