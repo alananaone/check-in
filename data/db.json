@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": "wang-rui-hong",
+      "name": "王睿宏",
+      "passwordHash": ""
+    },
+    {
+      "id": "lin-qin-zhen",
+      "name": "林沁臻",
+      "passwordHash": ""
+    }
+  ],
+  "logs": [],
+  "settings": {
+    "weeklyTargetHours": 16,
+    "ipRestricted": false,
+    "allowedIps": [],
+    "adminPasswordHash": "",
+    "updatedAt": "2026-09-09T02:46:52.177Z"
+  }
+}
